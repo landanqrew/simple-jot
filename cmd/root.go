@@ -27,12 +27,11 @@ to get started, run:
 
 to set up your configuration, run:
 
-	simple-jot config set project <project-name>
 	simple-jot config set note <note-id> 
 
 to get the value of a configuration, run:
 
-	simple-jot config get project
+	simple-jot config get note <note-id>
 
 to create a new note, run:
 

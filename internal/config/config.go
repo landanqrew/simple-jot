@@ -14,6 +14,7 @@ type Config struct {
 	ActiveNote     string `mapstructure:"active_note"`
 	DataDir        string `mapstructure:"data_dir"` // Directory where notes data will be stored
 	Editor         string `mapstructure:"editor"`   // Preferred text editor for editing notes (e.g., "vim", "nano", "code")
+	NoteID         string `mapstructure:"note_id"`  // The ID of the active note
 	// Add other configuration fields as your application grows
 }
 

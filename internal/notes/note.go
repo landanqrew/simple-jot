@@ -1,5 +1,10 @@
 package notes
 
+import (
+	"slices"
+	"time"
+)
+
 type Note struct {
 	ID        string `json:"id"`
 	Title     string `json:"title"`
@@ -10,3 +15,31 @@ type Note struct {
 	UpdatedAt string `json:"updated_at"`
 }
 
+func (n *Note) AddTag(tag string) {
+	if !slices.Contains(n.Tags, tag) {
+		n.Tags = append(n.Tags, tag)
+		n.UpdatedAt = time.Now().Format(time.DateTime)
+	}
+}
+
+func (n *Note) RemoveTag(tag string) {
+	newTags := make([]string, 0, len(n.Tags))
+	for _, t := range n.Tags {
+		if t != tag {
+			newTags = append(newTags, t)
+		}
+	}
+	n.Tags = newTags
+	n.UpdatedAt = time.Now().Format(time.DateTime)
+}
+
+func (n *Note) GetTags() []string {
+	return n.Tags
+}
+
+func (n *Note) UpdateContent(content string) {
+	if content != "" {
+		n.Content = content
+		n.UpdatedAt = time.Now().Format(time.DateTime)
+	}
+}
