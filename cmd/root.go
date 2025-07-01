@@ -31,7 +31,7 @@ to set up your configuration, run:
 
 to get the value of a configuration, run:
 
-	simple-jot config get note <note-id>
+	simple-jot config get note
 
 to create a new note, run:
 
@@ -45,7 +45,7 @@ to search for a note, run:
 
 	simple-jot search <query>
 
-to run a semantic search, run:
+to run a semantic search with llm agent, run:
 
 	simple-jot search --semantic <query>
 
