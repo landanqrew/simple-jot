@@ -2,6 +2,7 @@ package notes
 
 import (
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -35,6 +36,10 @@ func (n *Note) RemoveTag(tag string) {
 
 func (n *Note) GetTags() []string {
 	return n.Tags
+}
+
+func (n *Note) CheckContentMatch(matchContent string) bool {
+	return strings.Contains(n.Content, matchContent)
 }
 
 func (n *Note) UpdateContent(content string) {

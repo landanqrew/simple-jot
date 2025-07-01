@@ -47,7 +47,7 @@ to search for a note, run:
 
 to run a semantic search, run:
 
-	simple-jot search <query> --semantic
+	simple-jot search --semantic <query>
 
 to edit a note, run:
 
