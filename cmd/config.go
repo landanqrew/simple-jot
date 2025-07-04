@@ -41,10 +41,11 @@ var setCmd = &cobra.Command{
 var getCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get application configuration values",
-	Long:  `Allows you to retrieve various configuration values from simple-jot
+	Long: `Allows you to retrieve various configuration values from simple-jot
 	
 	Usage:
 		simple-jot config get note
+		simple-jot config get gemini-api-key
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
@@ -69,6 +70,24 @@ var noteSetCmd = &cobra.Command{
 	},
 }
 
+// geminiAPIKeySetCmd represents the gemini-api-key subcommand of config set
+var geminiAPIKeySetCmd = &cobra.Command{
+	Use:   "gemini-api-key <api-key>",
+	Short: "Set the Gemini API key",
+	Long:  `Sets the Gemini API key in the configuration for semantic search.`,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		apiKey := args[0]
+		viper.Set("gemini_api_key", apiKey)
+		err := viper.WriteConfig()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Error saving configuration:", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Gemini API Key set successfully.\n")
+	},
+}
+
 // noteGetCmd represents the note subcommand of config get
 var noteGetCmd = &cobra.Command{
 	Use:   "note",
@@ -85,6 +104,22 @@ var noteGetCmd = &cobra.Command{
 	},
 }
 
+// geminiAPIKeyGetCmd represents the gemini-api-key subcommand of config get
+var geminiAPIKeyGetCmd = &cobra.Command{
+	Use:   "gemini-api-key",
+	Short: "Get the Gemini API key",
+	Long:  `Retrieves the configured Gemini API key.`,
+	Args:  cobra.NoArgs,
+	Run: func(cmd *cobra.Command, args []string) {
+		apiKey := viper.GetString("gemini_api_key")
+		if apiKey == "" {
+			fmt.Println("No Gemini API Key is currently set.")
+		} else {
+			fmt.Printf("Gemini API Key: %s\n", apiKey)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(configCmd)
 
@@ -92,7 +127,9 @@ func init() {
 	configCmd.AddCommand(getCmd)
 
 	setCmd.AddCommand(noteSetCmd)
+	setCmd.AddCommand(geminiAPIKeySetCmd)
 	getCmd.AddCommand(noteGetCmd)
+	getCmd.AddCommand(geminiAPIKeyGetCmd)
 
 	// No flags directly on configCmd anymore, they are on subcommands if needed.
 }

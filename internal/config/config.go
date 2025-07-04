@@ -12,9 +12,10 @@ import (
 type Config struct {
 	NotesDirectory string `mapstructure:"notes_directory"`
 	ActiveNote     string `mapstructure:"active_note"`
-	DataDir        string `mapstructure:"data_dir"` // Directory where notes data will be stored
-	Editor         string `mapstructure:"editor"`   // Preferred text editor for editing notes (e.g., "vim", "nano", "code")
-	NoteID         string `mapstructure:"note_id"`  // The ID of the active note
+	DataDir        string `mapstructure:"data_dir"`       // Directory where notes data will be stored
+	Editor         string `mapstructure:"editor"`         // Preferred text editor for editing notes (e.g., "vim", "nano", "code")
+	NoteID         string `mapstructure:"note_id"`        // The ID of the active note
+	GeminiAPIKey   string `mapstructure:"gemini_api_key"` // API key for Gemini (for semantic search)
 	// Add other configuration fields as your application grows
 }
 

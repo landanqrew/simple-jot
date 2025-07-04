@@ -33,6 +33,14 @@ to get the value of a configuration, run:
 
 	simple-jot config get note
 
+to configure your Gemini API Key:
+
+	simple-jot config set gemini-api-key <YOUR_API_KEY>
+
+to view your configured Gemini API Key:
+
+	simple-jot config get gemini-api-key
+
 to create a new note, run:
 
 	simple-jot create <note-name> -n "<note-content>" -s (optional - will set the note configuration to the new note)

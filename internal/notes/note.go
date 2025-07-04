@@ -40,7 +40,7 @@ func (n *Note) GetTags() []string {
 }
 
 func (n *Note) CheckContentMatch(matchContent string) bool {
-	return strings.Contains(n.Content, matchContent)
+	return strings.Contains(strings.ToLower(n.Content), strings.ToLower(matchContent))
 }
 
 func (n *Note) UpdateContent(content string) {
@@ -80,4 +80,15 @@ func (n *Note) PrepRow() []string {
 		}
 	}
 	return row
+}
+
+// FilterNotesByContent filters a list of notes by content.
+func FilterNotesByContent(notes []Note, content string) []Note {
+	filtered := []Note{}
+	for _, note := range notes {
+		if note.CheckContentMatch(content) {
+			filtered = append(filtered, note)
+		}
+	}
+	return filtered
 }
