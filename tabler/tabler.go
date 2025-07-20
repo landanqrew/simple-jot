@@ -2,9 +2,12 @@ package tabler
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/olekukonko/tablewriter"
 )
 
 type RowPrepper interface {
@@ -60,4 +63,15 @@ func PrepTable(data []RowPrepper, headers []string) [][]string {
 		dataFrame[i+1] = row.PrepRow()
 	}
 	return dataFrame
+}
+
+func RenderTable(data [][]string, headers []string) error {
+	table := tablewriter.NewWriter(os.Stdout)
+	table.Header(headers)
+	table.Bulk(data)
+	err := table.Render()
+	if err != nil {
+		return fmt.Errorf("failed to render table: %w", err)
+	}
+	return nil
 }

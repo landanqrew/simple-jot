@@ -3,12 +3,10 @@ package tabler
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/olekukonko/tablewriter"
 )
 
 type exampleStruct struct{
@@ -113,13 +111,10 @@ func TestPrepTable(t *testing.T) {
 	// render table
 	if !t.Failed() {
 		fmt.Println("\nResulting Table:")
-		table := tablewriter.NewWriter(os.Stdout)
-		table.Header(headers)
-		table.Bulk(dataFrame)
-		err = table.Render()
+		err = RenderTable(dataFrame[1:], headers)
 		if err != nil {
 			t.Fail()
-			t.Fatalf("Failed to render table test. %v", err.Error())
+			t.Fatalf("Failed to render table test. %v", err)
 		}
 	}
 }
