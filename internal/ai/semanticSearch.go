@@ -14,6 +14,10 @@ type SearchResponse struct {
 	Score      float64 `json:"score"`
 }
 
+func (s SearchResponse) PrepRow() []string {
+	return []string{s.PrimaryKey, fmt.Sprintf("%f", s.Score)}
+}
+
 // generateSchemaFromStruct generates a Gemini schema from a Go struct type
 func generateSchemaFromStruct[T any]() *genai.Schema {
 	var zero T

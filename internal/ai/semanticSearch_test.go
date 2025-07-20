@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
 	"testing"
 
 	"github.com/landanqrew/simple-jot/internal/notes"
+	"github.com/landanqrew/simple-jot/tabler"
 )
 
 func TestSemanticSearch(t *testing.T) {
@@ -45,15 +45,18 @@ func TestSemanticSearch(t *testing.T) {
 		t.Error("Expected at least one search result, got 0")
 	}
 
-	fmt.Println("results: ", results)
-	fmt.Printf("Type of results: %v\n", reflect.TypeOf(results))
+	preppedRows := make([]tabler.RowPrepper, len(results))
+	for i, res := range results {
+		preppedRows[i] = res
+	}
+	dataFrame := tabler.PrepTable(preppedRows, []string{"PrimaryKey", "Score"})
+	tabler.RenderTable(dataFrame, []string{"PrimaryKey", "Score"})
 
 	// Assuming the 6th note (index 5) in the generated data is the 'Go Programming Best Practices' note
 	// This assertion relies on the specific content and ordering generated in testNotes.json
 	expectedGoNoteID := data[5].ID
 	foundGoNote := false
 	for _, res := range results {
-		fmt.Printf("Type of res in loop: %v\n", reflect.TypeOf(res))
 		if res.PrimaryKey == expectedGoNoteID && res.Score > 0.7 {
 			foundGoNote = true
 			break
