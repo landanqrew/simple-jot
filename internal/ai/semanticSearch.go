@@ -14,19 +14,14 @@ func SemanticSearch[T any](data []T, query string, apiKey string) ([]T, error) {
 	if err != nil {
 		return []T{}, err
 	}
-	// call gemini api
-	// TODO: Implement Gemini API call here
-	// This is a placeholder
-	// log.Println("jsonData: ", string(jsonData))
-	// log.Println("query: ", query)
-	// log.Println("apiKey: ", apiKey)
 
-	// Implement Gemini API call here
+	// call gemini api
+
 	// 1. Prepare the request payload
-	payload := map[string]interface{}{
-		"contents": []map[string]interface{}{
+	payload := map[string]any{
+		"contents": []map[string]any{
 			{
-				"parts": []map[string]interface{}{
+				"parts": []map[string]any{
 					{
 						"text": "Given the following data: " + string(jsonData) + ", find the items that are most relevant to the query: " + query,
 					},
@@ -40,7 +35,6 @@ func SemanticSearch[T any](data []T, query string, apiKey string) ([]T, error) {
 	}
 
 	// 2. Construct the API endpoint URL
-	// Assuming the Gemini API endpoint is something like this:
 	apiEndpoint := "https://generative-ai-api.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=" + apiKey
 
 	// 3. Create and execute the HTTP request
