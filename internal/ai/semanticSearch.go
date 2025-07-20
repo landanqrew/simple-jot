@@ -1,60 +1,113 @@
 package ai
 
 import (
+	"context"
 	"encoding/json"
-	"log"
+	"fmt"
+	"reflect"
 
-	"github.com/landanqrew/simple-jot/internal/requests"
+	"google.golang.org/genai"
 )
 
+type SearchResponse struct {
+	PrimaryKey string  `json:"primary_key"`
+	Score      float64 `json:"score"`
+}
 
-func SemanticSearch[T any](data []T, query string, apiKey string) ([]T, error) {
-	// marshall json
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return []T{}, err
+// generateSchemaFromStruct generates a Gemini schema from a Go struct type
+func generateSchemaFromStruct[T any]() *genai.Schema {
+	var zero T
+	t := reflect.TypeOf(zero)
+
+	properties := make(map[string]*genai.Schema)
+	var propertyOrdering []string
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" {
+			jsonTag = field.Name
+		}
+
+		propertyOrdering = append(propertyOrdering, jsonTag)
+
+		switch field.Type.Kind() {
+		case reflect.String:
+			properties[jsonTag] = &genai.Schema{Type: genai.TypeString}
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			properties[jsonTag] = &genai.Schema{Type: genai.TypeInteger}
+		case reflect.Float32, reflect.Float64:
+			properties[jsonTag] = &genai.Schema{Type: genai.TypeNumber}
+		case reflect.Slice:
+			if field.Type.Elem().Kind() == reflect.String {
+				properties[jsonTag] = &genai.Schema{
+					Type:  genai.TypeArray,
+					Items: &genai.Schema{Type: genai.TypeString},
+				}
+			}
+		}
 	}
 
-	// call gemini api
+	return &genai.Schema{
+		Type:             genai.TypeObject,
+		Properties:       properties,
+		PropertyOrdering: propertyOrdering,
+	}
+}
 
-	// 1. Prepare the request payload
-	payload := map[string]any{
-		"contents": []map[string]any{
-			{
-				"parts": []map[string]any{
-					{
-						"text": "Given the following data: " + string(jsonData) + ", find the items that are most relevant to the query: " + query,
-					},
-				},
-			},
+func SemanticSearch[T any](data []T, naturalLanguageQuery string, apiKey string) ([]SearchResponse, error) {
+    // marshall json
+    jsonDataBytes, err := json.Marshal(data)
+    if err != nil {
+        return nil, fmt.Errorf("failed to marshal data: %w", err)
+    }
+    jsonData := string(jsonDataBytes)
+
+    
+	ctx := context.Background()
+	client, err := genai.NewClient(ctx, &genai.ClientConfig{
+		APIKey: apiKey,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create client: %w", err)
+	}
+	sysPrompt := fmt.Sprintf(`
+You are a helpful assistant that can answer questions and evaluate data in accordance with the provided schema.
+You are given a list of data and a natural language query.
+You need to answer the question based on the data.
+The data is in the following format:
+%s
+The natural language query is:
+%s
+The response should be in the following format:
+[{"primary_key": "string", "score": float64}]
+The score is a float64 between 0 and 1, where 1 is the best match.
+The primary key is the primary key of the data. Return no more than 10 results. Return the results with the strongest match.
+`, jsonData, naturalLanguageQuery)
+
+	config := &genai.GenerateContentConfig{
+		ResponseMIMEType: "application/json",
+		ResponseSchema: &genai.Schema{
+			Type:  genai.TypeArray,
+			Items: generateSchemaFromStruct[SearchResponse](),
 		},
 	}
-	payloadBytes, err := json.Marshal(payload)
+
+	result, err := client.Models.GenerateContent(
+		ctx,
+		"gemini-2.5-flash",
+		genai.Text(sysPrompt),
+		config,
+	)
 	if err != nil {
-		return []T{}, err
+		return nil, fmt.Errorf("failed to generate content: %w", err)
 	}
 
-	// 2. Construct the API endpoint URL
-	apiEndpoint := "https://generative-ai-api.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key=" + apiKey
-
-	// 3. Create and execute the HTTP request
-	//log.Println("apiEndpoint: ", apiEndpoint)
-	resp, err := requests.MakeRequest(apiEndpoint, payloadBytes)
+	var searchResponses []SearchResponse
+	err = json.Unmarshal([]byte(result.Text()), &searchResponses)
 	if err != nil {
-		return []T{}, err
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
-	log.Println("resp: ", string(resp))
 
-
-	// unmarshall json
-	var items []T
-	err = json.Unmarshal(resp, &items)
-	if err != nil {
-		return []T{}, err
-	}
-	// return filtered data
-	return items, nil
-
-	
-
+	return searchResponses, nil
 }
