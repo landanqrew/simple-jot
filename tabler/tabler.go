@@ -1,6 +1,7 @@
 package tabler
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -52,6 +53,7 @@ func PrepTable(data []RowPrepper, headers []string) [][]string {
 	if len(data) == 0 {
 		return [][]string{}
 	}
+	fmt.Println("data:\n", data)
 	dataFrame := make([][]string, len(data) + 1)
 	dataFrame[0] = headers
 	for i, row := range data {
