@@ -33,7 +33,12 @@ func TestAddTag(t *testing.T) {
 
 	note.AddTag("tag3")
 
-	fmt.Println("note:\n", osutils.ToJsonString([]Note{note}))
+	json, err := osutils.ToJsonString([]Note{note})
+	if err != nil {
+		t.Fatalf("Failed to convert note to JSON: %v", err)
+	}
+
+	fmt.Println("note:\n", json)
 
 	if len(note.Tags) != 3 {
 		t.Errorf("Expected 3 tags, got %d", len(note.Tags))
