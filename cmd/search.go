@@ -27,12 +27,12 @@ and usage of using your command. For example:
 Usage:
 to search for a note, run:
 	simple-jot search -ds 2025-01-01 -de 2025-02-01
-	simple-jot search -t "tag1, tag2"
+	simple-jot search -t 'tag1, tag2'
 to run a semantic search with llm agent, run:
-	simple-jot search --semantic "<query>"
+	simple-jot search --semantic '<query>'
 	
 To search for notes by content (case-insensitive):
-	simple-jot search --content "your search term"
+	simple-jot search --content 'your search term'
 `,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -52,7 +52,7 @@ To search for notes by content (case-insensitive):
 			}
 			switch args[i-1] {
 			case "--semantic":
-				semanticSearch = arg	
+				semanticSearch = arg
 			case "-t":
 				tagStr = arg
 			case "--content":
@@ -149,6 +149,6 @@ func init() {
 	searchCmd.Flags().StringVarP(&semanticSearch, "semantic", "s", "", "Perform a semantic search using Gemini")
 	searchCmd.Flags().StringVarP(&contentSearch, "content", "c", "", "Search notes by content")
 	searchCmd.Flags().StringVarP(&tagStr, "tag", "t", "", "Search notes by tag")
-	searchCmd.Flags().StringVarP(&dsStr, "ds", "ds", "", "Search notes by date start")
-	searchCmd.Flags().StringVarP(&deStr, "de", "de", "", "Search notes by date end")
+	searchCmd.Flags().StringVarP(&dsStr, "date-start", "f", "", "Search notes by date start (format: YYYY-MM-DD)")
+	searchCmd.Flags().StringVarP(&deStr, "date-end", "u", "", "Search notes by date end (format: YYYY-MM-DD)")
 }

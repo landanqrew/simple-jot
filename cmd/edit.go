@@ -5,8 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"time"
 
 	"github.com/landanqrew/simple-jot/internal/notes"
@@ -14,11 +12,6 @@ import (
 	"github.com/landanqrew/simple-jot/internal/storage"
 	"github.com/landanqrew/simple-jot/tabler"
 	"github.com/spf13/cobra"
-)
-
-var (
-	// noteContent   string -- already defined in create.go
-	appendContent string
 )
 
 // editCmd represents the edit command
@@ -29,49 +22,47 @@ var editCmd = &cobra.Command{
 
 Usage:
 To overwrite the note:
-simple-jot edit <note-id> -n "<note-content>"
+simple-jot edit <note-id> -n '<note-content>'
 cat <my-file.txt> | simple-jot edit <note-id>
 
 To append to the note:
-simple-jot edit <note-id> -a "<note-content>"`,
-	Run: func(cmd *cobra.Command, args []string) {
-		// parse args
-		if len(args) < 1 {
-			fmt.Println("Error: Note ID is required. Please provide a note ID.")
-			os.Exit(1)
-		}
+simple-jot edit <note-id> -a '<note-content>'`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
 		noteID := args[0]
+
+		// Get flag values
+		noteContent, _ := cmd.Flags().GetString("note")
+		appendContent, _ := cmd.Flags().GetString("append")
 
 		// check if stdin is from a pipe or redirect
 		stdinContent, err := osutils.ReadStdin()
 		if err != nil {
-			fmt.Println("Error: Cannot read from stdin. See error: " + err.Error())
-			os.Exit(1)
+			return fmt.Errorf("cannot read from stdin: %v", err)
 		}
 
 		if stdinContent != "" {
 			// If content from stdin, prioritize it
 			if noteContent != "" {
-				log.Fatal("Error: Cannot provide note content via both -n flag and stdin. Please choose one.")
+				return fmt.Errorf("cannot provide note content via both -n flag and stdin. Please choose one")
 			}
 			if appendContent != "" {
-				log.Fatal("Error: Cannot use stdin to append to a note.")
+				return fmt.Errorf("cannot use stdin to append to a note")
 			}
 			noteContent = stdinContent
 		}
 
 		// handle invalid args
 		if noteContent == "" && appendContent == "" {
-			log.Fatal("Error: Note content cannot be empty. Please use the -n or --note flag to provide content, or pipe content to stdin.")
+			return fmt.Errorf("note content cannot be empty. Please use the -n or --note flag to provide content, or pipe content to stdin")
 		} else if noteContent != "" && appendContent != "" {
-			log.Fatal("Error: Cannot use both -n and -a flags. Please use only one.")
+			return fmt.Errorf("cannot use both -n and -a flags. Please use only one")
 		}
 
 		// fetch notes
 		noteList, err := storage.GetNotes()
 		if err != nil {
-			fmt.Println("Error: Cannot fetch notes. See error: " + err.Error())
-			os.Exit(1)
+			return fmt.Errorf("cannot fetch notes: %v", err)
 		}
 
 		// update note
@@ -92,29 +83,28 @@ simple-jot edit <note-id> -a "<note-content>"`,
 		}
 
 		if !found {
-			log.Fatal("Error: Note with ID '" + noteID + "' not found.")
+			return fmt.Errorf("note with ID '%s' not found", noteID)
 		}
 
 		// save notes
 		err = storage.SaveNotes(noteList)
 		if err != nil {
-			log.Fatal("Error: Cannot save notes. See error: " + err.Error())
+			return fmt.Errorf("cannot save notes: %v", err)
 		}
-		fmt.Println("Note updated successfully.")
+		cmd.Println("Note updated successfully.")
 
-		tabler.RenderTable([][]string{currentNote.PrepRow()}, currentNote.GetHeaders())
+		err = tabler.RenderTable([][]string{currentNote.PrepRow()}, currentNote.GetHeaders())
+		if err != nil {
+			return fmt.Errorf("failed to render table: %v", err)
+		}
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(editCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	editCmd.Flags().StringVarP(&noteContent, "note", "n", "", "Content of the note. If not provided, content will be read from stdin.")
-	editCmd.Flags().StringVarP(&appendContent, "append", "a", "", "Append this content to the active configuration note")
-
-	editCmd.Flags().SetAnnotation("note", cobra.BashCompFilenameExt, []string{"txt"})
-
-	// editCmd.MarkFlagRequired("note") // Commented out to allow stdin input
+	editCmd.Flags().StringP("note", "n", "", "Content of the note. If not provided, content will be read from stdin.")
+	editCmd.Flags().StringP("append", "a", "", "Append this content to the active configuration note")
 }

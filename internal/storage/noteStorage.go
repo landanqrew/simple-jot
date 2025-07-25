@@ -2,48 +2,81 @@ package storage
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 
-	notes "github.com/landanqrew/simple-jot/internal/notes"
-	"github.com/spf13/viper"
+	"github.com/landanqrew/simple-jot/internal/notes"
 )
 
-func GetNotes() ([]notes.Note, error) {
-	// read notes.json from local file system based on the config file
-	// if the file does not exist, return an empty slice
-	// if the file exists, parse the json and return the notes
-	var noteFilePath string = viper.GetString("data_dir") + "/notes.json"
+// NoteStorage defines the interface for note storage operations
+type NoteStorage interface {
+	GetNotes() ([]notes.Note, error)
+	SaveNotes([]notes.Note) error
+}
 
-	notes := make([]notes.Note, 0)
-	if _, err := os.Stat(noteFilePath); os.IsNotExist(err) {
-		// create the file:
-		SaveNotes(notes)
-		return notes, nil
+// FileNoteStorage implements NoteStorage using the filesystem
+type FileNoteStorage struct {
+	filePath string
+}
+
+// NewFileNoteStorage creates a new FileNoteStorage instance
+func NewFileNoteStorage(filePath string) *FileNoteStorage {
+	return &FileNoteStorage{filePath: filePath}
+}
+
+// GetNotes retrieves all notes from storage
+func (s *FileNoteStorage) GetNotes() ([]notes.Note, error) {
+	if _, err := os.Stat(s.filePath); os.IsNotExist(err) {
+		return []notes.Note{}, nil
 	}
 
-	bytes, err := os.ReadFile(noteFilePath)
+	data, err := os.ReadFile(s.filePath)
 	if err != nil {
-		return nil, errors.New("failed to read notes file: " + err.Error())
+		return nil, fmt.Errorf("failed to read notes file: %v", err)
 	}
 
-	err = json.Unmarshal(bytes, &notes)
-	if err != nil {
-		return nil, errors.New("failed to unmarshal notes: " + err.Error())
+	var notes []notes.Note
+	if err := json.Unmarshal(data, &notes); err != nil {
+		return nil, fmt.Errorf("failed to parse notes: %v", err)
 	}
 
 	return notes, nil
 }
 
-func SaveNotes(notes []notes.Note) error {
-	var noteFilePath string = viper.GetString("data_dir") + "/notes.json"
-	bytes, err := json.Marshal(notes)
+// SaveNotes saves all notes to storage
+func (s *FileNoteStorage) SaveNotes(notes []notes.Note) error {
+	data, err := json.MarshalIndent(notes, "", "  ")
 	if err != nil {
-		return errors.New("failed to marshal notes: " + err.Error())
+		return fmt.Errorf("failed to marshal notes: %v", err)
 	}
-	err = os.WriteFile(noteFilePath, bytes, 0644)
-	if err != nil {
-		return errors.New("failed to write notes to file: " + err.Error())
+
+	dir := filepath.Dir(s.filePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %v", err)
 	}
+
+	if err := os.WriteFile(s.filePath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write notes to file: %v", err)
+	}
+
 	return nil
+}
+
+// Default storage instance
+var defaultStorage NoteStorage = NewFileNoteStorage("notes.json")
+
+// GetNotes is a convenience function that uses the default storage
+func GetNotes() ([]notes.Note, error) {
+	return defaultStorage.GetNotes()
+}
+
+// SaveNotes is a convenience function that uses the default storage
+func SaveNotes(notes []notes.Note) error {
+	return defaultStorage.SaveNotes(notes)
+}
+
+// SetDefaultStorage allows changing the default storage implementation
+func SetDefaultStorage(storage NoteStorage) {
+	defaultStorage = storage
 }
