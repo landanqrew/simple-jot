@@ -7,12 +7,16 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/renderer"
+	"github.com/olekukonko/tablewriter/tw"
 )
 
 type RowPrepper interface {
 	PrepRow() []string
 }
+
 
 // practice with generics
 func PrepStructRow[T any](s T) []string {
@@ -56,8 +60,7 @@ func PrepTable(data []RowPrepper, headers []string) [][]string {
 	if len(data) == 0 {
 		return [][]string{}
 	}
-	fmt.Println("data:\n", data)
-	dataFrame := make([][]string, len(data) + 1)
+	dataFrame := make([][]string, len(data)+1)
 	dataFrame[0] = headers
 	for i, row := range data {
 		dataFrame[i+1] = row.PrepRow()
@@ -66,7 +69,49 @@ func PrepTable(data []RowPrepper, headers []string) [][]string {
 }
 
 func RenderTable(data [][]string, headers []string) error {
-	table := tablewriter.NewWriter(os.Stdout)
+	/*table := tablewriter.NewWriter(os.Stdout)
+	table.Configure(func(cfg *tablewriter.Config) {
+		cfg.MaxWidth = 120
+		cfg.Row.Formatting.AutoWrap = 2
+	})*/
+
+	colorCfg := renderer.ColorizedConfig{
+		Header: renderer.Tint{
+			FG: renderer.Colors{color.FgGreen, color.Bold}, // Green bold headers
+		},
+		Column: renderer.Tint{
+			FG: renderer.Colors{color.FgCyan}, // Default cyan for rows
+			Columns: []renderer.Tint{
+				{FG: renderer.Colors{color.FgMagenta}}, // Magenta for column 0
+				{},                                     // Inherit default (cyan)
+				{FG: renderer.Colors{color.FgHiRed}},   // High-intensity red for column 2
+			},
+		},
+		Footer: renderer.Tint{
+			FG: renderer.Colors{color.FgYellow, color.Bold}, // Yellow bold footer
+			Columns: []renderer.Tint{
+				{},                                      // Inherit default
+				{FG: renderer.Colors{color.FgHiYellow}}, // High-intensity yellow for column 1
+				{},                                      // Inherit default
+			},
+		},
+		Border:    renderer.Tint{FG: renderer.Colors{color.FgWhite}}, // White borders
+		Separator: renderer.Tint{FG: renderer.Colors{color.FgWhite}}, // White separators
+	}
+
+	table := tablewriter.NewTable(os.Stdout,
+		tablewriter.WithRenderer(renderer.NewColorized(colorCfg)),
+		tablewriter.WithConfig(tablewriter.Config{
+			Row: tw.CellConfig{
+				Formatting:   tw.CellFormatting{AutoWrap: tw.WrapNormal}, // Wrap long content
+				Alignment:    tw.CellAlignment{Global: tw.AlignLeft},     // Left-align rows
+				ColMaxWidths: tw.CellWidth{Global: 40},
+			},
+			Footer: tw.CellConfig{
+				Alignment: tw.CellAlignment{Global: tw.AlignRight},
+			},
+		}),
+	)
 	table.Header(headers)
 	table.Bulk(data)
 	err := table.Render()
