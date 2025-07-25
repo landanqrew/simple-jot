@@ -17,6 +17,7 @@ import (
 	"github.com/landanqrew/simple-jot/internal/storage"
 	"github.com/landanqrew/simple-jot/tabler"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -85,6 +86,20 @@ Examples:
 		err = storage.SaveNotes(noteSlice)
 		if err != nil {
 			log.Fatal("failed to save notes: " + err.Error())
+		}
+
+		if setNote {
+			viper.Set("active_note", newNote.ID)
+			err := viper.WriteConfig()
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Error saving configuration:", err)
+				activeNote := viper.GetString("active_note")
+				fmt.Println("Active note is currently set to: " + activeNote)
+				os.Exit(1)
+			}
+			fmt.Printf("Active note set to: %s\n", newNote.ID)
+		} else {
+			fmt.Printf("Note created successfully. Use 'simple-jot config set note %s' to set this note as the active note.\n", newNote.ID)
 		}
 
 		err = tabler.RenderTable([][]string{newNote.PrepRow()}, newNote.GetHeaders())
