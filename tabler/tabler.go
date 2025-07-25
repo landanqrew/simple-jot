@@ -87,14 +87,6 @@ func RenderTable(data [][]string, headers []string) error {
 				{FG: renderer.Colors{color.FgHiRed}},   // High-intensity red for column 2
 			},
 		},
-		Footer: renderer.Tint{
-			FG: renderer.Colors{color.FgYellow, color.Bold}, // Yellow bold footer
-			Columns: []renderer.Tint{
-				{},                                      // Inherit default
-				{FG: renderer.Colors{color.FgHiYellow}}, // High-intensity yellow for column 1
-				{},                                      // Inherit default
-			},
-		},
 		Border:    renderer.Tint{FG: renderer.Colors{color.FgWhite}}, // White borders
 		Separator: renderer.Tint{FG: renderer.Colors{color.FgWhite}}, // White separators
 	}
