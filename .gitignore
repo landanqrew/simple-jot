@@ -33,3 +33,5 @@ go.work.sum
 
 # FILES TO IGNORE
 /IGNORE/
+
+/internal/requests/

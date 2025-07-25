@@ -4,9 +4,18 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio" // Import bufio for efficient reading
 	"fmt"
+	"log"
 	"os" // Import os for exiting on error
+	"time"
 
+	// Import io for reading from stdin
+
+	"github.com/google/uuid"
+	"github.com/landanqrew/simple-jot/internal/notes"
+	"github.com/landanqrew/simple-jot/internal/storage"
+	"github.com/landanqrew/simple-jot/tabler"
 	"github.com/spf13/cobra"
 )
 
@@ -28,12 +37,31 @@ Examples:
 `,
 	Args: cobra.ExactArgs(1), // Ensures exactly one positional argument is provided
 	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) == 0 {
+			log.Fatal("note name/title is required")
+		}
 		noteName := args[0]
+
+		// Check if content is provided via stdin
+		stat, _ := os.Stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) == 0 { // Check if stdin is from a pipe or redirect
+			scanner := bufio.NewScanner(os.Stdin)
+			var stdinContent []byte
+			for scanner.Scan() {
+				stdinContent = append(stdinContent, scanner.Bytes()...)
+				stdinContent = append(stdinContent, '\n') // Add newline after each scanned line
+			}
+			if err := scanner.Err(); err != nil {
+				log.Fatalf("Error reading from stdin: %v", err)
+			}
+			if len(stdinContent) > 0 {
+				noteContent = string(stdinContent)
+			}
+		}
 
 		// Basic validation for note content
 		if noteContent == "" {
-			fmt.Println("Error: Note content cannot be empty. Please use the -n or --note flag to provide content.")
-			os.Exit(1)
+			log.Fatal("Error: Note content cannot be empty. Please use the -n or --note flag to provide content, or pipe content to stdin.")
 		}
 
 		fmt.Printf("Creating note: %s\n", noteName)
@@ -41,8 +69,28 @@ Examples:
 		fmt.Printf("Set as current note: %t\n", setNote)
 
 		// TODO: Add logic here to save the note and handle the 'setNote' flag
+		noteSlice, err := storage.GetNotes()
+		if err != nil {
+			log.Fatal("failed to get notes: " + err.Error())
+		}
+		newNote := notes.Note{
+			ID: uuid.New().String(),
+			Title: noteName,
+			Content: noteContent,
+			CreatedAt: time.Now().Format(time.DateTime),
+			UpdatedAt: time.Now().Format(time.DateTime),
+			Tags: []string{},
+		}
+		noteSlice = append(noteSlice, newNote)
+		err = storage.SaveNotes(noteSlice)
+		if err != nil {
+			log.Fatal("failed to save notes: " + err.Error())
+		}
 
-		fmt.Println("Note created successfully (placeholder).")
+		err = tabler.RenderTable([][]string{newNote.PrepRow()}, newNote.GetHeaders())
+		if err != nil {
+			log.Fatal("failed to render table: " + err.Error())
+		}
 	},
 }
 
@@ -50,11 +98,14 @@ func init() {
 	rootCmd.AddCommand(createCmd)
 
 	// Define flags for the create command
-	createCmd.Flags().StringVarP(&noteContent, "note", "n", "", "Content of the note")
+	createCmd.Flags().StringVarP(&noteContent, "note", "n", "", "Content of the note. If not provided, content will be read from stdin.")
 	createCmd.Flags().BoolVarP(&setNote, "set", "s", false, "Set this note as the active configuration note")
+
+	createCmd.Flags().SetAnnotation("note", cobra.BashCompFilenameExt, []string{"txt"})
 
 	// Mark the -n flag as required, meaning it must be provided.
 	createCmd.MarkFlagRequired("note")
+	
 
 	// Here you will define your flags and configuration settings.
 

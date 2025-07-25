@@ -2,6 +2,7 @@ package notes
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"testing"
 	"time"
@@ -229,3 +230,31 @@ func TestFilterNotesByContent(t *testing.T) {
 		t.Errorf("Expected all notes for empty query, got %d", len(filteredEmpty))
 	}
 }
+
+func TestFilterNotesByDate(t *testing.T) {
+	path := "./internal/notes/testNotes.json"
+	rawBytes, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("Failed to read testNotes.json: %v", err)
+	}
+
+	testNotes, err := osutils.ReadJson[Note](rawBytes)
+	if err != nil {
+		t.Fatalf("Failed to read testNotes.json: %v", err)
+	}
+
+	filteredNotes := FilterNotesByDate(testNotes, "2021-01-01", "2021-03-01")
+	expectedNoteCount := 2
+	if len(filteredNotes) != expectedNoteCount {
+		t.Errorf("Expected %d notes for '2021-01-01', got %d", expectedNoteCount, len(filteredNotes))
+	}
+
+	expectedNoteIds := []string{"6d3c8b6d-6988-4d1c-9d67-f51e9cea20da", "f165afab-dd12-465b-9e8d-c39d6fb605f2"}
+	for _, note := range filteredNotes {
+		if !slices.Contains(expectedNoteIds, note.ID) {
+			t.Errorf("Expected note ID %s to be in filtered notes", note.ID)
+		}
+	}
+}
+
+

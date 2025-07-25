@@ -7,8 +7,8 @@
       "tag2"
     ],
     "content": "This is the content for note 0. It talks about various topics.",
-    "created_at": "2025-07-20 15:16:52",
-    "updated_at": "2025-07-20 15:16:52"
+    "created_at": "2025-01-20 15:16:52",
+    "updated_at": "2025-01-20 15:16:52"
   },
   {
     "id": "f165afab-dd12-465b-9e8d-c39d6fb605f2",
@@ -17,9 +17,9 @@
       "tag1",
       "tag2"
     ],
-    "content": "This is the content for note 1. It talks about various topics.",
-    "created_at": "2025-07-20 14:16:52",
-    "updated_at": "2025-07-20 15:16:52"
+    "content": "Structs, interfaces, go routines, and generics.",
+    "created_at": "2025-02-20 14:16:52",
+    "updated_at": "2025-02-20 15:16:52"
   },
   {
     "id": "7c9d79be-2e75-456b-9d32-aa913b53fb40",
