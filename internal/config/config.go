@@ -26,7 +26,7 @@ var globalConfig *Config
 // It searches for a config file, sets defaults, and binds environment variables.
 func InitConfig() error {
 	// Set the name of the config file (without extension)
-	viper.SetConfigName(".note-cli")
+	viper.SetConfigName(".simple-jot")
 	// Set the type of the config file
 	viper.SetConfigType("yaml")
 
@@ -38,16 +38,16 @@ func InitConfig() error {
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
-	viper.AddConfigPath(filepath.Join(home, ".config", "note-cli")) // Standard XDG config dir
+	viper.AddConfigPath(filepath.Join(home, ".config", "simple-jot")) // Standard XDG config dir
 	viper.AddConfigPath(home)                                       // Fallback to home directory directly
 
 	// Set default values for configuration options
-	defaultDataDir := filepath.Join(home, ".note-cli", "data")
+	defaultDataDir := filepath.Join(home, ".simple-jot", "data")
 	viper.SetDefault("data_dir", defaultDataDir)
 	viper.SetDefault("editor", os.Getenv("EDITOR")) // Use EDITOR env var as default for editor
 
 	// Read environment variables (e.g., NOTECLI_DATA_DIR, NOTECLI_EDITOR)
-	viper.SetEnvPrefix("NOTECLI") // Prefix for environment variables (e.g., NOTECLI_DATA_DIR)
+	viper.SetEnvPrefix("SIMPLE_JOT") // Prefix for environment variables (e.g., SIMPLE_JOT_DATA_DIR)
 	viper.AutomaticEnv()          // Read matching environment variables
 
 	// Attempt to read the config file

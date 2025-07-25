@@ -97,7 +97,7 @@ func RenderTable(data [][]string, headers []string) error {
 			Row: tw.CellConfig{
 				Formatting:   tw.CellFormatting{AutoWrap: tw.WrapNormal}, // Wrap long content
 				Alignment:    tw.CellAlignment{Global: tw.AlignLeft},     // Left-align rows
-				ColMaxWidths: tw.CellWidth{Global: 40},
+				ColMaxWidths: tw.CellWidth{Global: 25},
 			},
 			Footer: tw.CellConfig{
 				Alignment: tw.CellAlignment{Global: tw.AlignRight},

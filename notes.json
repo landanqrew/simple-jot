@@ -30,5 +30,29 @@
     "content": "This is my first note using simple-jot. I edited it with the -n flag.I can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\nI can edit notes by appending content like this\n",
     "created_at": "2025-07-25 11:13:57",
     "updated_at": "2025-07-25 12:20:22"
+  },
+  {
+    "id": "614c6461-9926-4595-8e19-9e057e956826",
+    "title": "austin is a jerry",
+    "tags": [],
+    "content": "this is not the first instance of knowing that austin is a jerry",
+    "created_at": "2025-07-25 12:27:38",
+    "updated_at": "2025-07-25 12:27:38"
+  },
+  {
+    "id": "09375dae-b04f-49b8-8040-139a3dd38e0e",
+    "title": "austin is a jerry",
+    "tags": [],
+    "content": "this is not the first instance of knowing that austin is a jerry",
+    "created_at": "2025-07-25 12:28:42",
+    "updated_at": "2025-07-25 12:28:42"
+  },
+  {
+    "id": "c55418be-860d-4cc4-bf5d-5544d4915d34",
+    "title": "readme",
+    "tags": [],
+    "content": "# simple-jot\nA CLI tool for taking and managing notes (written in Go)\n\n## Installation\n\n```bash\ngo build -o simple-jot .\n```\n\n## Usage\n\n### Important Note About Quotes\nWhen providing note content through command-line flags, use single quotes (`'`) instead of double quotes (`\"`) to avoid shell interpretation issues:\n\n```bash\n# Good - uses single quotes\nsimple-jot create \"My Note\" -n 'This is my note content!'\n\n# Problematic - double quotes might cause issues with special characters\nsimple-jot create \"My Note\" -n \"This is my note content!\"\n```\n\n### Commands\n\n#### Create Notes\nCreate a new note with content:\n```bash\n# Create with direct content\nsimple-jot create \"Note Title\" -n 'Your note content'\n\n# Create and set as active note\nsimple-jot create \"Note Title\" -n 'Your note content' -s\n\n# Create by piping content from a file\ncat file.txt | simple-jot create \"Note Title\"\n\n# Create by piping content directly\necho 'Note content' | simple-jot create \"Note Title\"\n```\n\n#### Edit Notes\nEdit an existing note:\n```bash\n# Overwrite content\nsimple-jot edit \u003cnote-id\u003e -n 'New content'\n\n# Append content\nsimple-jot edit \u003cnote-id\u003e -a 'Additional content'\n\n# Edit by piping new content\necho 'New content' | simple-jot edit \u003cnote-id\u003e\n```\n\n#### List Notes\nView all notes:\n```bash\nsimple-jot list\n```\n\n#### Search Notes\nSearch through your notes:\n```bash\n# Search by date range\nsimple-jot search --date-start \"2025-01-01\" --date-end \"2025-02-01\"\n\n# Search by content\nsimple-jot search --content \"search term\"\n\n# Search by tag\nsimple-jot search --tag \"important\"\n\n# Semantic search\nsimple-jot search --semantic \"programming\"\n```\n\n#### Tag Notes\nAdd tags to your notes:\n```bash\n# Tag a note\nsimple-jot tag \u003cnote-id\u003e \"tag-name\"\n```\n\n#### Delete Notes\nDelete a note:\n```bash\nsimple-jot delete \u003cnote-id\u003e\n```\n\n#### Configuration\nManage your configuration:\n```bash\n# Set active note\nsimple-jot config set note \u003cnote-id\u003e\n\n# Get active note\nsimple-jot config get note\n```\n\n## Features\n- Create and manage notes with unique IDs\n- Edit notes with overwrite or append functionality\n- Search notes by content, date, or tags\n- Tag system for organization\n- Pipe content from files or other commands\n- Configuration management\n- Table-formatted output for better readability\n\n## Tips\n1. Use single quotes (`'`) for note content to avoid shell interpretation issues\n2. When editing notes, prefer the `-n` flag for overwriting content or omit if you pipe in with stdin\n3. Use the list command to find note IDs for editing or deleting\n4. Pipe content from files for longer notes or when special characters are needed\n",
+    "created_at": "2025-07-25 12:30:20",
+    "updated_at": "2025-07-25 12:30:20"
   }
 ]

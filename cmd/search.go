@@ -5,15 +5,14 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"strings"
 
+	"github.com/landanqrew/simple-jot/internal/ai"
 	"github.com/landanqrew/simple-jot/internal/config"
 	"github.com/landanqrew/simple-jot/internal/notes"
 	"github.com/landanqrew/simple-jot/internal/storage"
 	"github.com/landanqrew/simple-jot/internal/tags"
-	"github.com/olekukonko/tablewriter"
+	"github.com/landanqrew/simple-jot/tabler"
 	"github.com/spf13/cobra"
 )
 
@@ -21,62 +20,60 @@ import (
 var searchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "Search for notes",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Long: `Search for notes using various criteria. You can search by content, tags, date range, or perform semantic search.
 
-Usage:
-to search for a note, run:
-	simple-jot search -ds 2025-01-01 -de 2025-02-01
-	simple-jot search -t 'tag1, tag2'
-to run a semantic search with llm agent, run:
-	simple-jot search --semantic '<query>'
-	
-To search for notes by content (case-insensitive):
-	simple-jot search --content 'your search term'
+Examples:
+  # Search by date range
+  simple-jot search --date-start 2025-01-01 --date-end 2025-02-01
+  
+  # Search by tag
+  simple-jot search --tag 'tag1,tag2'
+  
+  # Search by content (case-insensitive)
+  simple-jot search --content 'your search term'
+  
+  # Semantic search with AI
+  simple-jot search --semantic 'programming concepts'
 `,
-	Args: cobra.MinimumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		noteList, err := storage.GetNotes()
 		if err != nil {
-			log.Fatal("cannot fetch notes", err.Error())
+			return fmt.Errorf("cannot fetch notes: %w", err)
 		}
-		// parse args
-		semanticSearch := ""
-		contentSearch := ""
-		tagStr := ""
-		dsStr := ""
-		deStr := ""
-		for i, arg := range args {
-			if i == 0 {
-				continue
-			}
-			switch args[i-1] {
-			case "--semantic":
-				semanticSearch = arg
-			case "-t":
-				tagStr = arg
-			case "--content":
-				contentSearch = arg
-			case "-ds":
-				dsStr = arg
-			case "-de":
-				deStr = arg
-			}
-		}
+
+		// Get flag values
+		semanticSearch, _ := cmd.Flags().GetString("semantic")
+		contentSearch, _ := cmd.Flags().GetString("content")
+		tagStr, _ := cmd.Flags().GetString("tag")
+		dsStr, _ := cmd.Flags().GetString("date-start")
+		deStr, _ := cmd.Flags().GetString("date-end")
+
 		filteredNotes := noteList
 
 		if semanticSearch != "" {
 			cfg := config.GetConfig()
 			geminiAPIKey := cfg.GeminiAPIKey
 			if geminiAPIKey == "" {
-				fmt.Println("Error: Gemini API Key is not set. Please set it using 'simple-jot config set gemini-api-key <YOUR_API_KEY>'")
-				os.Exit(1)
+				cmd.PrintErr("Error: Gemini API Key is not set. Please set it using 'simple-jot config set gemini-api-key <YOUR_API_KEY>'\n")
+				return fmt.Errorf("gemini API key not configured")
 			}
-			fmt.Println("Performing semantic search with Gemini API...")
+			cmd.Println("Performing semantic search with Gemini API...")
+			cmd.Printf("Query: %s\n", semanticSearch)
 			// TODO: Implement actual Gemini API call here
-			// For now, just a placeholder
-			fmt.Println("Query:", strings.Join(args, " "))
-			return // Exit after semantic search for now
+			searchResults, err := ai.SemanticSearch(noteList, semanticSearch, geminiAPIKey)
+			if err != nil {
+				return fmt.Errorf("failed to perform semantic search: %w", err)
+			}
+			searchDF := make([][]string, len(searchResults))
+			headers := filteredNotes[0].GetHeaders()
+			for i, result := range searchResults {
+				searchDF[i] = result.PrepRow()
+			}
+			err = tabler.RenderTable(searchDF, headers)
+			if err != nil {
+				return fmt.Errorf("failed to render table: %w", err)
+			}
+			return nil
 		}
 
 		if contentSearch != "" {
@@ -90,21 +87,24 @@ To search for notes by content (case-insensitive):
 			noteSet := make(map[string]notes.Note)
 			store := notes.NoteStore{}
 			store.BuildNoteMap(noteList)
+
 			for _, tagName := range tagList {
-				relatedNoteIDs := tagMap.GetNotesForTag(strings.Trim(tagName, " "))
+				trimmedTag := strings.TrimSpace(tagName)
+				relatedNoteIDs := tagMap.GetNotesForTag(trimmedTag)
 				if len(relatedNoteIDs) == 0 {
-					fmt.Println("Error identified. No notes found for tag (" + tagName + ")")
+					cmd.PrintErrf("Error identified. No notes found for tag (%s)\n", trimmedTag)
 					continue
 				}
 				for _, noteID := range relatedNoteIDs {
 					n, err := store.GetNoteByID(noteID)
 					if err != nil {
-						fmt.Println("cannot find note for id (" + noteID + "). See error: " + err.Error())
+						cmd.PrintErrf("cannot find note for id (%s). See error: %s\n", noteID, err.Error())
+						continue
 					}
 					noteSet[noteID] = n
 				}
 			}
-			filteredNotes = make([]notes.Note, 0)
+			filteredNotes = make([]notes.Note, 0, len(noteSet))
 			for _, note := range noteSet {
 				filteredNotes = append(filteredNotes, note)
 			}
@@ -113,42 +113,36 @@ To search for notes by content (case-insensitive):
 		if dsStr != "" || deStr != "" {
 			filteredNotes = notes.FilterNotesByDate(filteredNotes, dsStr, deStr)
 		}
-		dataFrame := make([][]string, len(filteredNotes)+1)
-		dataFrame[0] = filteredNotes[0].GetHeaders()
+
+		// Prepare table data
+		if len(filteredNotes) == 0 {
+			cmd.Println("No notes found matching the search criteria.")
+			return nil
+		}
+
+		dataFrame := make([][]string, len(filteredNotes))
+		headers := filteredNotes[0].GetHeaders()
+
 		for i, n := range filteredNotes {
-			row := n.PrepRow()
-			dataFrame[i+1] = row
+			dataFrame[i] = n.PrepRow()
 		}
-		table := tablewriter.NewWriter(os.Stdout)
-		table.Header(dataFrame[0])
-		table.Bulk(dataFrame[1:])
-		err = table.Render()
+
+		err = tabler.RenderTable(dataFrame, headers)
 		if err != nil {
-			log.Fatalln("Failed to render table for your notes query. Exiting Program")
+			return fmt.Errorf("failed to render table: %w", err)
 		}
+
+		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(searchCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// searchCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// searchCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	semanticSearch := ""
-	contentSearch := ""
-	tagStr := ""
-	dsStr := ""
-	deStr := ""
-	searchCmd.Flags().StringVarP(&semanticSearch, "semantic", "s", "", "Perform a semantic search using Gemini")
-	searchCmd.Flags().StringVarP(&contentSearch, "content", "c", "", "Search notes by content")
-	searchCmd.Flags().StringVarP(&tagStr, "tag", "t", "", "Search notes by tag")
-	searchCmd.Flags().StringVarP(&dsStr, "date-start", "f", "", "Search notes by date start (format: YYYY-MM-DD)")
-	searchCmd.Flags().StringVarP(&deStr, "date-end", "u", "", "Search notes by date end (format: YYYY-MM-DD)")
+	// Define flags
+	searchCmd.Flags().StringP("semantic", "s", "", "Perform a semantic search using Gemini")
+	searchCmd.Flags().StringP("content", "c", "", "Search notes by content")
+	searchCmd.Flags().StringP("tag", "t", "", "Search notes by tag (comma-separated for multiple tags)")
+	searchCmd.Flags().StringP("date-start", "f", "", "Search notes by date start (format: YYYY-MM-DD)")
+	searchCmd.Flags().StringP("date-end", "u", "", "Search notes by date end (format: YYYY-MM-DD)")
 }

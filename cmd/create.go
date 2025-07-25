@@ -77,12 +77,9 @@ Examples:
 
 		if setNote {
 			viper.Set("active_note", newNote.ID)
-			err := viper.WriteConfig()
+			err = viper.WriteConfig()
 			if err != nil {
-				cmd.PrintErrf("Error saving configuration: %v\n", err)
-				activeNote := viper.GetString("active_note")
-				cmd.Printf("Active note is currently set to: %s\n", activeNote)
-				return err
+				return fmt.Errorf("failed to save config: %v", err)
 			}
 			cmd.Printf("Active note set to: %s\n", newNote.ID)
 		} else {

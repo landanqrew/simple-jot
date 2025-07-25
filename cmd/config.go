@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/landanqrew/simple-jot/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -20,10 +21,12 @@ var configCmd = &cobra.Command{
 Usage:
   simple-jot config set note <note-id>
   simple-jot config get note
+  simple-jot config set gemini-api-key <api-key>
+  simple-jot config get gemini-api-key
 `,
 	// configCmd itself will not have a direct action, it acts as a container for subcommands.
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Help()
 	},
 }
 
@@ -32,8 +35,8 @@ var setCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set application configuration values",
 	Long:  `Allows you to set various configuration values for simple-jot.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Help()
 	},
 }
 
@@ -47,8 +50,8 @@ var getCmd = &cobra.Command{
 		simple-jot config get note
 		simple-jot config get gemini-api-key
 	`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cmd.Help()
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return cmd.Help()
 	},
 }
 
@@ -58,15 +61,35 @@ var noteSetCmd = &cobra.Command{
 	Short: "Set the current active note ID",
 	Long:  `Sets the specified note ID as the active note in the configuration.`,
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		noteID := args[0]
-		viper.Set("active_note", noteID)
-		err := viper.WriteConfig()
+
+		// Ensure config is initialized
+		err := config.InitConfig()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error saving configuration:", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to initialize config: %w", err)
 		}
-		fmt.Printf("Active note set to: %s\n", noteID)
+
+		viper.Set("active_note", noteID)
+
+		// Try to write the config, and if it fails because no config file exists, create one
+		err = viper.WriteConfig()
+		if err != nil {
+			// If writing fails, try to write a new config file
+			home, homeErr := os.UserHomeDir()
+			if homeErr != nil {
+				return fmt.Errorf("failed to get home directory: %w", homeErr)
+			}
+
+			configPath := fmt.Sprintf("%s/.simple-jot.yaml", home)
+			err = viper.WriteConfigAs(configPath)
+			if err != nil {
+				return fmt.Errorf("error creating configuration file: %w", err)
+			}
+		}
+
+		cmd.Printf("Active note set to: %s\n", noteID)
+		return nil
 	},
 }
 
@@ -76,15 +99,35 @@ var geminiAPIKeySetCmd = &cobra.Command{
 	Short: "Set the Gemini API key",
 	Long:  `Sets the Gemini API key in the configuration for semantic search.`,
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		apiKey := args[0]
-		viper.Set("gemini_api_key", apiKey)
-		err := viper.WriteConfig()
+
+		// Ensure config is initialized
+		err := config.InitConfig()
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "Error saving configuration:", err)
-			os.Exit(1)
+			return fmt.Errorf("failed to initialize config: %w", err)
 		}
-		fmt.Printf("Gemini API Key set successfully.\n")
+
+		viper.Set("gemini_api_key", apiKey)
+
+		// Try to write the config, and if it fails because no config file exists, create one
+		err = viper.WriteConfig()
+		if err != nil {
+			// If writing fails, try to write a new config file
+			home, homeErr := os.UserHomeDir()
+			if homeErr != nil {
+				return fmt.Errorf("failed to get home directory: %w", homeErr)
+			}
+
+			configPath := fmt.Sprintf("%s/.simple-jot.yaml", home)
+			err = viper.WriteConfigAs(configPath)
+			if err != nil {
+				return fmt.Errorf("error creating configuration file: %w", err)
+			}
+		}
+
+		cmd.Printf("Gemini API Key set successfully.\n")
+		return nil
 	},
 }
 
@@ -94,13 +137,20 @@ var noteGetCmd = &cobra.Command{
 	Short: "Get the current active note ID",
 	Long:  `Retrieves the currently active note ID from the configuration.`,
 	Args:  cobra.NoArgs, // Expects no arguments
-	Run: func(cmd *cobra.Command, args []string) {
-		activeNote := viper.GetString("active_note")
-		if activeNote == "" {
-			fmt.Println("No active note is currently set.")
-		} else {
-			fmt.Printf("Current active note: %s\n", activeNote)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Ensure config is initialized
+		err := config.InitConfig()
+		if err != nil {
+			return fmt.Errorf("failed to initialize config: %w", err)
 		}
+
+		cfg := config.GetConfig()
+		if cfg.ActiveNote == "" {
+			cmd.Println("No active note is currently set.")
+		} else {
+			cmd.Println(cfg.ActiveNote)
+		}
+		return nil
 	},
 }
 
@@ -110,13 +160,20 @@ var geminiAPIKeyGetCmd = &cobra.Command{
 	Short: "Get the Gemini API key",
 	Long:  `Retrieves the configured Gemini API key.`,
 	Args:  cobra.NoArgs,
-	Run: func(cmd *cobra.Command, args []string) {
-		apiKey := viper.GetString("gemini_api_key")
-		if apiKey == "" {
-			fmt.Println("No Gemini API Key is currently set.")
-		} else {
-			fmt.Printf("Gemini API Key: %s\n", apiKey)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// Ensure config is initialized
+		err := config.InitConfig()
+		if err != nil {
+			return fmt.Errorf("failed to initialize config: %w", err)
 		}
+
+		cfg := config.GetConfig()
+		if cfg.GeminiAPIKey == "" {
+			cmd.Println("No Gemini API Key is currently set.")
+		} else {
+			cmd.Printf("Gemini API Key: %s\n", cfg.GeminiAPIKey)
+		}
+		return nil
 	},
 }
 
