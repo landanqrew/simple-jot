@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/landanqrew/simple-jot/internal/osutils"
+	"github.com/landanqrew/simple-jot/tabler"
 )
 
 // functions to test:
@@ -232,7 +233,7 @@ func TestFilterNotesByContent(t *testing.T) {
 }
 
 func TestFilterNotesByDate(t *testing.T) {
-	path := "./internal/notes/testNotes.json"
+	path := "testNotes.json"
 	rawBytes, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("Failed to read testNotes.json: %v", err)
@@ -243,10 +244,21 @@ func TestFilterNotesByDate(t *testing.T) {
 		t.Fatalf("Failed to read testNotes.json: %v", err)
 	}
 
-	filteredNotes := FilterNotesByDate(testNotes, "2021-01-01", "2021-03-01")
+	filteredNotes := FilterNotesByDate(testNotes, "2025-01-01", "2025-03-01")
+	dataFrame := make([][]string, len(filteredNotes))
+	for i, note := range filteredNotes {
+		dataFrame[i] = note.PrepRow()
+	}
+
+	if len(filteredNotes) > 0 {
+		tabler.RenderTable(dataFrame, filteredNotes[0].GetHeaders())
+	} else {
+		fmt.Println("No notes found for '2025-01-01' - '2025-03-01'")
+	}
+
 	expectedNoteCount := 2
 	if len(filteredNotes) != expectedNoteCount {
-		t.Errorf("Expected %d notes for '2021-01-01', got %d", expectedNoteCount, len(filteredNotes))
+		t.Errorf("Expected %d notes for '2025-01-01', got %d", expectedNoteCount, len(filteredNotes))
 	}
 
 	expectedNoteIds := []string{"6d3c8b6d-6988-4d1c-9d67-f51e9cea20da", "f165afab-dd12-465b-9e8d-c39d6fb605f2"}

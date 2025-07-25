@@ -57,12 +57,12 @@ func TestReadStdin(t *testing.T) {
 				}
 				os.Stdin = r // Redirect stdin to the read end of the pipe
 
-				// Write test input to the write end of the pipe
+				// Write test input to the write file of the pipe
 				_, err = io.WriteString(w, tt.input)
 				if err != nil {
 					t.Fatalf("Failed to write to pipe: %v", err)
 				}
-				w.Close() // Close the write end to signal EOF
+				w.Close() // Close the write file
 			}
 
 			// Call the function under test

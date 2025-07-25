@@ -34,4 +34,8 @@ go.work.sum
 # FILES TO IGNORE
 /IGNORE/
 
+# requests directory (not needed for this project)
 /internal/requests/
+
+# test files
+/test.sh

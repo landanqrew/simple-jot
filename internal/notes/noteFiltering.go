@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// FilterNotesByDate filters notes by date. date format for input is YYYY-MM-DD
 func FilterNotesByDate(notes []Note, startDate string, endDate string) []Note {
 	if startDate == "" {
 		if endDate == "" {
@@ -18,7 +19,7 @@ func FilterNotesByDate(notes []Note, startDate string, endDate string) []Note {
 		}
 		filteredNotes := make([]Note, 0)
 		for _, note := range notes {
-			nd, err := time.Parse(time.DateOnly, note.CreatedAt)
+			nd, err := time.Parse(time.DateTime, note.CreatedAt)
 			if err != nil {
 				fmt.Println("failed to parse note date: " + err.Error())
 				// include regardless
@@ -37,7 +38,7 @@ func FilterNotesByDate(notes []Note, startDate string, endDate string) []Note {
 			}
 			filteredNotes := make([]Note, 0)
 			for _, note := range notes {
-				nd, err := time.Parse(time.DateOnly, note.CreatedAt)
+				nd, err := time.Parse(time.DateTime, note.CreatedAt)
 				if err != nil {
 					fmt.Println("failed to parse note date: " + err.Error())
 					// include regardless
@@ -53,18 +54,21 @@ func FilterNotesByDate(notes []Note, startDate string, endDate string) []Note {
 			if err != nil {
 				log.Fatal("failed to parse start date: " + err.Error() + " use format YYYY-MM-DD")
 			}
+			// fmt.Println("sd: " + sd.Format(time.DateTime))
 			ed, err := time.Parse(time.DateOnly, endDate)
 			if err != nil {
 				log.Fatal("failed to parse end date: " + err.Error() + " use format YYYY-MM-DD")
 			}
+			// fmt.Println("ed: " + ed.Format(time.DateTime))
 			filteredNotes := make([]Note, 0)
 			for _, note := range notes {
-				nd, err := time.Parse(time.DateOnly, note.CreatedAt)
+				nd, err := time.Parse(time.DateTime, note.CreatedAt)
 				if err != nil {
 					fmt.Println("failed to parse note date: " + err.Error())
 					// include regardless
 					filteredNotes = append(filteredNotes, note)
 				}
+				// fmt.Println("nd: " + nd.Format(time.DateTime))
 				if (nd.After(sd) || nd.Equal(sd)) && (nd.Before(ed) || nd.Equal(ed)) {
 					filteredNotes = append(filteredNotes, note)
 				}
