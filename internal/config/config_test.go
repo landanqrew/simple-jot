@@ -34,7 +34,7 @@ func TestConfig(t *testing.T) {
 
 		// Check that data directory is set to default
 		home, _ := os.UserHomeDir()
-		expectedDataDir := filepath.Join(home, ".note-cli", "data")
+		expectedDataDir := filepath.Join(home, ".simple-jot", "data")
 		if config.DataDir != expectedDataDir {
 			t.Errorf("Expected DataDir %q, got %q", expectedDataDir, config.DataDir)
 		}
@@ -45,7 +45,7 @@ func TestConfig(t *testing.T) {
 		}
 
 		// Clean up created directory
-		os.RemoveAll(filepath.Join(home, ".note-cli"))
+		os.RemoveAll(filepath.Join(home, ".simple-jot"))
 	})
 
 	t.Run("InitConfig with config file", func(t *testing.T) {
@@ -54,7 +54,7 @@ func TestConfig(t *testing.T) {
 
 		// Create a temporary directory and config file
 		tempDir := t.TempDir()
-		configFile := filepath.Join(tempDir, ".note-cli.yaml")
+		configFile := filepath.Join(tempDir, ".simple-jot.yaml")
 		testDataDir := filepath.Join(tempDir, "test-notes")
 
 		configContent := `
@@ -115,7 +115,7 @@ note_id: active-note-123
 
 		// Create a temporary directory and invalid config file
 		tempDir := t.TempDir()
-		configFile := filepath.Join(tempDir, ".note-cli.yaml")
+		configFile := filepath.Join(tempDir, ".simple-jot.yaml")
 
 		// Invalid YAML content
 		invalidConfigContent := `
@@ -156,7 +156,7 @@ invalid yaml content:
 
 		// Create a temp config file with an invalid data directory
 		tempDir := t.TempDir()
-		configFile := filepath.Join(tempDir, ".note-cli.yaml")
+		configFile := filepath.Join(tempDir, ".simple-jot.yaml")
 
 		configContent := `data_dir: /root/test-data`
 
@@ -206,7 +206,7 @@ invalid yaml content:
 
 		// Use temp directory to avoid conflicts
 		tempDir := t.TempDir()
-		configFile := filepath.Join(tempDir, ".note-cli.yaml")
+		configFile := filepath.Join(tempDir, ".simple-jot.yaml")
 
 		// First initialization with one config
 		configContent1 := `
@@ -287,7 +287,7 @@ func TestConfigEdgeCases(t *testing.T) {
 		}
 
 		// Create config file that points to existing directory
-		configFile := filepath.Join(tempDir, ".note-cli.yaml")
+		configFile := filepath.Join(tempDir, ".simple-jot.yaml")
 		configContent := `data_dir: ` + testDataDir
 		err = os.WriteFile(configFile, []byte(configContent), 0644)
 		if err != nil {
@@ -331,7 +331,7 @@ func TestConfigEdgeCases(t *testing.T) {
 
 		// Use a temporary directory for the config
 		tempDir := t.TempDir()
-		configFile := filepath.Join(tempDir, ".note-cli.yaml")
+		configFile := filepath.Join(tempDir, ".simple-jot.yaml")
 		configContent := `data_dir: ` + filepath.Join(tempDir, "data")
 		err := os.WriteFile(configFile, []byte(configContent), 0644)
 		if err != nil {

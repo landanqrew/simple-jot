@@ -15,7 +15,7 @@ type SearchResponse struct {
 }
 
 func (s SearchResponse) PrepRow() []string {
-	return []string{s.PrimaryKey, fmt.Sprintf("%f", s.Score)}
+	return []string{s.PrimaryKey, fmt.Sprintf("%.2f %%", s.Score * 100)}
 }
 
 // generateSchemaFromStruct generates a Gemini schema from a Go struct type
@@ -86,7 +86,7 @@ The natural language query is:
 The response should be in the following format:
 [{"primary_key": "string", "score": float64}]
 The score is a float64 between 0 and 1, where 1 is the best match.
-The primary key is the primary key of the data. Return no more than 10 results. Return the results with the strongest match.
+The primary key is the primary key of the data. Return no more than 10 results. Return the results with the strongest match. Do not return any results with a score less than 0.5.
 `, jsonData, naturalLanguageQuery)
 
 	config := &genai.GenerateContentConfig{

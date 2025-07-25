@@ -64,16 +64,10 @@ var noteSetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		noteID := args[0]
 
-		// Ensure config is initialized
-		err := config.InitConfig()
-		if err != nil {
-			return fmt.Errorf("failed to initialize config: %w", err)
-		}
-
 		viper.Set("active_note", noteID)
 
 		// Try to write the config, and if it fails because no config file exists, create one
-		err = viper.WriteConfig()
+		err := viper.WriteConfig()
 		if err != nil {
 			// If writing fails, try to write a new config file
 			home, homeErr := os.UserHomeDir()
@@ -102,16 +96,10 @@ var geminiAPIKeySetCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		apiKey := args[0]
 
-		// Ensure config is initialized
-		err := config.InitConfig()
-		if err != nil {
-			return fmt.Errorf("failed to initialize config: %w", err)
-		}
-
 		viper.Set("gemini_api_key", apiKey)
 
 		// Try to write the config, and if it fails because no config file exists, create one
-		err = viper.WriteConfig()
+		err := viper.WriteConfig()
 		if err != nil {
 			// If writing fails, try to write a new config file
 			home, homeErr := os.UserHomeDir()
@@ -138,12 +126,6 @@ var noteGetCmd = &cobra.Command{
 	Long:  `Retrieves the currently active note ID from the configuration.`,
 	Args:  cobra.NoArgs, // Expects no arguments
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Ensure config is initialized
-		err := config.InitConfig()
-		if err != nil {
-			return fmt.Errorf("failed to initialize config: %w", err)
-		}
-
 		cfg := config.GetConfig()
 		if cfg.ActiveNote == "" {
 			cmd.Println("No active note is currently set.")
@@ -161,12 +143,6 @@ var geminiAPIKeyGetCmd = &cobra.Command{
 	Long:  `Retrieves the configured Gemini API key.`,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Ensure config is initialized
-		err := config.InitConfig()
-		if err != nil {
-			return fmt.Errorf("failed to initialize config: %w", err)
-		}
-
 		cfg := config.GetConfig()
 		if cfg.GeminiAPIKey == "" {
 			cmd.Println("No Gemini API Key is currently set.")

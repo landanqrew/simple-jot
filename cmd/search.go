@@ -65,9 +65,20 @@ Examples:
 				return fmt.Errorf("failed to perform semantic search: %w", err)
 			}
 			searchDF := make([][]string, len(searchResults))
-			headers := filteredNotes[0].GetHeaders()
+			noteStore := make(map[string]notes.Note)
+			for _, note := range noteList {
+				noteStore[note.ID] = note
+			}
+
+			headers := []string{"ID", "Score", "Content"}
 			for i, result := range searchResults {
+				lookupNote, ok := noteStore[result.PrimaryKey]
+				if !ok {
+					return fmt.Errorf("failed to get note with id (%s): %w", result.PrimaryKey, err)
+				}
 				searchDF[i] = result.PrepRow()
+				// fmt.Println(searchDF[i], lookupNote.Content)
+				searchDF[i] = append(searchDF[i], lookupNote.Content)
 			}
 			err = tabler.RenderTable(searchDF, headers)
 			if err != nil {
